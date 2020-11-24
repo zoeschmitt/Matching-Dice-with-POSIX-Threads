@@ -11,12 +11,12 @@
 
 FILE* logFile;
 int seed = 0;
-int sums[NUM_PLAYERS];
+int sums[NUM_PLAYERS]; // holds sums of each player
 bool gameOver = false;
-int upNext = -1;
+int upNext = -1; // dealer sets first player in dealer()
 
 sem_t *sem_rolling;
-pthread_cond_t winner = PTHREAD_COND_INITIALIZER;
+pthread_cond_t winner = PTHREAD_COND_INITIALIZER; 
 pthread_cond_t upNextCond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t dealerMutex = PTHREAD_MUTEX_INITIALIZER; 
 pthread_mutex_t playerMutex = PTHREAD_MUTEX_INITIALIZER; 
@@ -40,6 +40,9 @@ void logResults(int player, int rollOne, int rollTwo) {
     default:
         break;
     }
+
+    printf("Player %c: ", playerL);
+    printf("%d %d\n", rollOne, rollTwo);
 
     fprintf(logFile, "Player %c: ", playerL);
     fprintf(logFile, "gets %d and %d with a sum of ", rollOne, rollTwo);
@@ -87,7 +90,6 @@ void* dealer(void* arg) {
 void roll(int player) {
     int roll1 = rand() % 7;
     int roll2 = rand() % 7;
-    printf("rolled %d and %d\n", roll1, roll2);
     sums[player] = roll1 + roll2; // update sums array
     logResults(player, roll1, roll2); // log the turn to file
 }
@@ -103,7 +105,6 @@ void* player(void* arg) {
         pthread_mutex_unlock(&playerMutex); 
         status =  checkStatus(); // make sure someone else hasn't won already
         if (!status) {
-            printf("player %d rolling\n", *iptr);
             sem_wait(sem_rolling);  // make sure only one person is rolling at a time
             roll(*iptr);
             sem_post(sem_rolling);
